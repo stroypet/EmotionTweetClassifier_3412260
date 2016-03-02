@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 # Import the libraries created for this task
 from RulesClassifier import RulesClassifier
 from LexiconClassifier import LexiconClassifier
+from EmotionClassifier import EmotionClassifier
 from MachineLearningClassifier import MachineLearningClassifier
 from PreProcess import pre_process
 
@@ -42,6 +43,7 @@ class TwitterHybridClassifier(object):
         # initialize internal variables
         self.rules_classifier = RulesClassifier()
         self.lexicon_classifier = LexiconClassifier()
+        self.emotion_classifier = EmotionClassifier()
         self.ml_classifier = None
 
         # if the ML model has been generated, load the model from model.pkl
@@ -60,10 +62,10 @@ class TwitterHybridClassifier(object):
             tweet_messages = [tweet_message for tweet_message,label in tweets]
             tweet_labels = [label for tweet_message,label in tweets]
 
-            # preproces all the tweet_messages (Tokenization, POS and normalization)
+            # preprocess all the tweet_messages (Tokenization, POS and normalization)
             tweet_tokens = pre_process(tweet_messages)
 
-            # compile a trainset with tweek_tokens and labels (positive,
+            # compile a trainset with tweet_tokens and labels (positive,
             # negative or neutral)
 
             trainset = [(tweet_tokens[i],tweet_labels[i]) for i in range(len(tweets))]
@@ -81,7 +83,7 @@ class TwitterHybridClassifier(object):
     # Apply the classifier over a tweet message in String format
     def classify(self,tweet_text):
 
-        # 0. Pre-process the teets (tokenization, tagger, normalizations)
+        # 0. Pre-process the tweets (tokenization, tagger, normalizations)
         tweet_tokens_list = []
 
         print ('Preprocessing the string')
@@ -89,6 +91,9 @@ class TwitterHybridClassifier(object):
         tweet_tokens_list = pre_process([tweet_text])
 
         predictions = []
+        rbpreds = []
+        lbpreds = []
+        mlpreds = []
         total_tweets = len(tweet_tokens_list)
 
         # iterate over the tweet_tokens
@@ -97,14 +102,16 @@ class TwitterHybridClassifier(object):
             # 1. Rule-based classifier. Look for emoticons basically
             positive_score,negative_score = self.rules_classifier.classify(tweet_tokens)
 
-            # 1. Apply the rules, If any found, classify the tweet here. If none found, continue for the lexicon classifier.
+            #1. Apply the rules, If any found, classify the tweet here. If none found, continue for the lexicon classifier.
             if positive_score >= 1 and negative_score == 0:
                 sentiment = ('positive','RB')
                 predictions.append(sentiment)
+                rbpreds.append(sentiment)
                 continue
             elif positive_score == 0 and negative_score <= -1:
                 sentiment = ('negative','RB')
                 predictions.append(sentiment)
+                rbpreds.append(sentiment)
                 continue
 
             # 2. Lexicon-based classifier
@@ -116,10 +123,12 @@ class TwitterHybridClassifier(object):
             if positive_score >= 1 and negative_score == 0:
                 sentiment = ('positive','LB')
                 predictions.append(sentiment)
+                lbpreds.append(sentiment)
                 continue
             elif negative_score <= -2:
                 sentiment = ('negative','LB')
                 predictions.append(sentiment)
+                lbpreds.append(sentiment)
                 continue
 
             # 3. Machine learning based classifier - used the Train+Dev set sto define the best features to classify new instances
@@ -136,6 +145,7 @@ class TwitterHybridClassifier(object):
                 sentiment = ('neutral','ML')
 
             predictions.append(sentiment)
+            mlpreds.append(sentiment)
 
         return predictions
 
@@ -153,6 +163,10 @@ class TwitterHybridClassifier(object):
         tweet_tokens_list = pre_process(tweet_texts)
 
         predictions = []
+        rbpreds = [] #not needed
+        lbpreds = [] #not needed
+        mlpreds = [] #not needed
+        emopreds = []
         total_tweets = len(tweet_tokens_list)
 
         # iterate over the tweet_tokens
@@ -163,30 +177,41 @@ class TwitterHybridClassifier(object):
             # 1. Rule-based classifier. Look for emoticons basically
             positive_score,negative_score = self.rules_classifier.classify(tweet_tokens)
 
-            # 1. Apply the rules, If any found, classify the tweet here. If none found, continue for the lexicon classifier.
+            #1. Apply the rules, If any found, classify the tweet here. If none found, continue for the lexicon classifier.
             if positive_score >= 1 and negative_score == 0:
                 sentiment = ('positive','RB')
                 predictions.append(sentiment)
+                rbpreds.append(sentiment)#not needed
                 continue
             elif positive_score == 0 and negative_score <= -1:
                 sentiment = ('negative','RB')
                 predictions.append(sentiment)
+                rbpreds.append(sentiment)#not needed
                 continue
 
-            # 2. Lexicon-based classifier
+            # 2. Lexicon-based classifier w/ emotions
             positive_score, negative_score = self.lexicon_classifier.classify(tweet_tokens)
             lexicon_score = positive_score + negative_score
+            #added new emotion scores here
+            anger_score, anticipation_score, disgust_score, fear_score, joy_score, sadness_score, surprise_score, trust_score = self.emotion_classifier.classify(tweet_tokens)
+
 
             # 2. Apply lexicon classifier,
             # If in the threshold classify the tweet here. If not, continue for the ML classifier
-            if positive_score >= 1 and negative_score == 0:
+            if positive_score >= 1 and negative_score == 0: # original: >= 1, == 0
                 sentiment = ('positive','LB')
                 predictions.append(sentiment)
+                lbpreds.append(sentiment)#not needed
                 continue
             elif negative_score <= -2:
                 sentiment = ('negative','LB')
                 predictions.append(sentiment)
+                lbpreds.append(sentiment)#not needed
                 continue
+
+            emotionDict = {'anger': anger_score, 'anticipation': anticipation_score, 'disgust': disgust_score,'fear': fear_score, 'joy': joy_score, 'sadness': sadness_score, 'surprise': surprise_score, 'trust': trust_score}
+            emotion = max(emotionDict, key=emotionDict.get)
+            emopreds.append(emotion)
 
             # 3. Machine learning based classifier - used the Train+Dev set sto define the best features to classify new instances
             result = self.ml_classifier.classify(tweet_tokens)
@@ -202,6 +227,7 @@ class TwitterHybridClassifier(object):
                 sentiment = ('neutral','ML')
 
             predictions.append(sentiment)
+            mlpreds.append(sentiment)#not needed
 
         return predictions
 
@@ -240,4 +266,4 @@ class TwitterHybridClassifier(object):
             line += tweet_labels[index] + '\t"' + tweet_texts[index].replace('"','') + '"\n'
 
             fp.write(line)
-        print('Indivual score saved in the file: individual_scores.tab')
+        print('Individual score saved in the file: individual_scores.tab')

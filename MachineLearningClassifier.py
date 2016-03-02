@@ -86,7 +86,7 @@ class MachineLearningClassifier(object):
                 feature_set['has_char_ngrams'] = True
                 break
 
-        # 5th feature: punctuaion ngrams
+        # 5th feature: punctuation ngrams
         regexp = re.compile(r"([!\?])\1{2,}")
         feature_set['has_punct_ngrams'] = False
         for token,tag in tweet_tokens:
@@ -107,7 +107,7 @@ class MachineLearningClassifier(object):
 
 
     # train the classifier
-    # Tweets argument must be a list of dicitionaries. Each dictionary must
+    # Tweets argument must be a list of dictionaries. Each dictionary must
     # have the keys ['MESSAGE'] and ['SENTIMENT'] with the message string and
     # the classificationclass, respectively.
     def train(self,tweets):
@@ -137,7 +137,7 @@ class MachineLearningClassifier(object):
         print('Vectorizing the features')
         data = self.vectorizer.fit_transform(features_list)
         target = self.encoder.fit_transform([label for tweet_tokens,label in tweets])
-        print('Builing the model')
+        print('Building the model')
         self.classifier.fit(data, target)
 
 

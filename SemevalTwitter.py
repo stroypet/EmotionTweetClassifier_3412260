@@ -82,7 +82,7 @@ class SemevalTwitter(object):
             lines = fp.readlines()
             for line in lines:
             #for line in fp:
-                # corrects the \u and scape caracters in the message (only applies
+                # corrects the \u and escape characters in the message (only applies
                 # for the dev and testset provided by the organization
                 line = line.strip()
                 line = line.replace('\\\\', '').replace('\\"', '"').replace("\\'", "'").replace('\\u2019', '\'').replace('\\u002c', ',')

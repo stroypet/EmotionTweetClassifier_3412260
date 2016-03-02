@@ -37,14 +37,14 @@ class LexiconClassifier(object):
     def read_opinionlex(self):
 
         # read positive words
-        with codecs.open('./Data/Lexicon/opinion-lexicon-English/positive-words.txt', 'r', encoding='utf8') as f:
+        with codecs.open('/Users/stroypet/PycharmProjects/EmotionTweetClassifier_3412260/Data/Lexicon/opinion-lexicon-English/positive-words.txt', 'r', encoding='utf8') as f:
             words = f.read().splitlines()
         pos_words = [w for w in words if not w.startswith(';')]
         pos_words.remove('')
         positive_words = {k:1 for k in pos_words}
 
         # read negative words
-        with codecs.open('./Data/Lexicon/opinion-lexicon-English/negative-words.txt', 'r', encoding='utf8') as f:
+        with codecs.open('/Users/stroypet/PycharmProjects/EmotionTweetClassifier_3412260/Data/Lexicon/opinion-lexicon-English/negative-words.txt', 'r', encoding='utf8') as f:
             words = f.read().splitlines()
         neg_words = [w for w in words if not w.startswith(';')]
         neg_words.remove('')
@@ -90,7 +90,7 @@ class LexiconClassifier(object):
             if w[0] == '#':
                 if w[1:] in self.sentiment_hashtags:
                     if self.sentiment_hashtags[w[1:]] == 'positive':
-                        pos_so += 2
+                        pos_so +=2
                     elif self.sentiment_hashtags[w[1:]] == 'negative':
                         neg_so += -2
                     continue

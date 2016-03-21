@@ -1,3 +1,6 @@
+This work was done for my Honours Thesis surrounding Natural Language Processing and Information Visualization. This work builds on the TwitterHybridClassifier created by Pedro Balage and Lucas Avanço. I utilize their classifier with some added tweaks to visualize user timelines (sentiment over time) using the JavaScript Library d3. See their description below.
+
+
 ﻿TwitterHybridClassifier
 =======================
 
